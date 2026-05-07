@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#c8f135" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PosSize" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<title>Position Size Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c0f;
+    --surface: #141418;
+    --surface2: #1c1c22;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #c8f135;
+    --accent-dim: rgba(200,241,53,0.12);
+    --accent-dim2: rgba(200,241,53,0.06);
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #ff5e5e;
+    --warn: #f7b731;
+    --warn-dim: rgba(247,183,49,0.1);
+    --success: #3fcf8e;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    padding-top: calc(var(--safe-top) + 24px);
+    padding-bottom: calc(var(--safe-bottom) + 40px);
+    padding-left: 16px;
+    padding-right: 16px;
+    overflow-y: auto;
+  }
+
+  .container { max-width: 520px; margin: 0 auto; }
+
+  header { margin-bottom: 28px; }
+
+  .logo-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(0.8); }
+  }
+
+  h1 {
+    font-size: 11px; font-family: var(--mono);
+    color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase;
+  }
+
+  .tagline { font-size: 26px; font-weight: 800; line-height: 1.2; }
+  .tagline span { color: var(--accent); }
+
+  /* Install banner */
+  #install-banner {
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,241,53,0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #install-banner p {
+    font-size: 13px; font-family: var(--mono); color: var(--accent); flex: 1; line-height: 1.4;
+  }
+
+  #install-btn {
+    background: var(--accent); color: #0c0c0f;
+    border: none; border-radius: 8px;
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    padding: 8px 14px; cursor: pointer; white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-size: 10px; font-family: var(--mono);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 11px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+
+  .type-pills {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 18px;
+  }
+
+  .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--mono); font-size: 11px;
+    padding: 10px 4px; text-align: center;
+    cursor: pointer; transition: all 0.15s;
+    user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+
+  .pill.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent); font-weight: 700;
+  }
+
+  .lot-wrap { margin-top: 12px; }
+
+  .results-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+  }
+
+  .metric {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+
+  .metric.highlight {
+    border-color: rgba(200,241,53,0.25);
+    background: var(--accent-dim2);
+  }
+
+  .metric .mlabel {
+    font-size: 10px; font-family: var(--mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+
+  .metric .mval {
+    font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--text);
+  }
+
+  .metric .mval.accent { color: var(--accent); }
+  .metric .mval.danger { color: var(--danger); }
+  .metric .mval.success { color: var(--success); }
+
+  .rr-header {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;
+  }
+
+  .rr-title {
+    font-size: 10px; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .rr-val { font-size: 18px; font-family: var(--mono); font-weight: 700; }
+
+  .rr-track {
+    height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+  }
+
+  .rr-fill {
+    height: 100%; border-radius: 3px; background: var(--accent);
+    transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+    width: 0%;
+  }
+
+  .rr-note { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+
+  .warn-box {
+    background: var(--warn-dim);
+    border: 1px solid rgba(247,183,49,0.25);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 12px; font-family: var(--mono); color: var(--warn);
+    margin-top: 12px; display: none; line-height: 1.5;
+  }
+
+  footer {
+    margin-top: 20px; text-align: center;
+    font-size: 10px; font-family: var(--mono);
+    color: rgba(255,255,255,0.12); letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 380px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-3 .field:last-child { grid-column: span 2; }
+    .type-pills { grid-template-columns: repeat(2,1fr); }
+    .tagline { font-size: 22px; }
+    .metric .mval { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-dot"></div>
+      <h1>Trade Calculator</h1>
+    </div>
+    <p class="tagline">Size your position.<br><span>Protect your edge.</span></p>
+  </header>
+
+  <!-- Install Banner -->
+  <div id="install-banner">
+    <p>Add to home screen for app experience</p>
+    <button id="install-btn">Install</button>
+  </div>
+
+  <!-- Account -->
+  <div class="card">
+    <p class="card-title">Account</p>
+    <div class="grid-2">
+      <div class="field">
+        <label>Balance ($)</label>
+        <input type="number" id="balance" value="1000" min="1" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label>Risk per trade (%)</label>
+        <input type="number" id="riskPct" value="1" min="0.1" max="100" step="0.1" inputmode="decimal" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Instrument -->
+  <div class="card">
+    <p class="card-title">Instrument</p>
+    <div class="type-pills">
+      <div class="pill active" id="btn-forex" onclick="setType('forex')">Forex</div>
+      <div class="pill" id="btn-gold" onclick="setType('gold')">Gold</div>
+      <div class="pill" id="btn-crypto" onclick="setType('crypto')">Crypto</div>
+      <div class="pill" id="btn-index" onclick="setType('index')">Index</div>
+    </div>
+
+    <p class="card-title">Setup</p>
+    <div class="grid-3">
+      <div class="field">
+        <label id="entry-label">Entry</label>
+        <input type="number" id="entry" value="1.0900" step="0.0001" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label>Stop Loss</label>
+        <input type="number" id="sl" value="1.0850" step="0.0001" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label>Take Profit</label>
+        <input type="number" id="tp" value="1.1000" step="0.0001" inputmode="decimal" />
+      </div>
+    </div>
+
+    <div class="lot-wrap" id="lot-field">
+      <div class="field">
+        <label>Lot size type</label>
+        <select id="lotType">
+          <option value="standard">Standard (100,000)</option>
+          <option value="mini">Mini (10,000)</option>
+          <option value="micro">Micro (1,000)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <p class="card-title">Results</p>
+    <div class="results-grid">
+      <div class="metric highlight">
+        <p class="mlabel">Position size</p>
+        <p class="mval accent" id="posSize">—</p>
+      </div>
+      <div class="metric">
+        <p class="mlabel">$ at risk</p>
+        <p class="mval danger" id="dollarRisk">—</p>
+      </div>
+      <div class="metric">
+        <p class="mlabel">SL distance</p>
+        <p class="mval" id="slPips">—</p>
+      </div>
+      <div class="metric">
+        <p class="mlabel">Potential profit</p>
+        <p class="mval success" id="potProfit">—</p>
+      </div>
+    </div>
+
+    <div class="rr-header">
+      <span class="rr-title">Risk : Reward</span>
+      <span class="rr-val" id="rrLabel">—</span>
+    </div>
+    <div class="rr-track">
+      <div class="rr-fill" id="rrBar"></div>
+    </div>
+    <p class="rr-note" id="rrNote"></p>
+    <div class="warn-box" id="warnBox"></div>
+  </div>
+
+  <footer>for educational purposes only &middot; not financial advice</footer>
+</div>
+
+<script>
+  // PWA Install
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').style.display = 'flex';
+  });
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('install-banner').style.display = 'none';
+  });
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  // Calculator
+  let instType = 'forex';
+
+  function setType(t) {
+    instType = t;
+    ['forex','gold','crypto','index'].forEach(x => {
+      document.getElementById('btn-'+x).classList.toggle('active', x === t);
+    });
+    const defaults = {
+      forex:  { entry:'1.0900', sl:'1.0850', tp:'1.1000', label:'Entry' },
+      gold:   { entry:'2320',   sl:'2300',   tp:'2380',   label:'Entry ($)' },
+      crypto: { entry:'3000',   sl:'2900',   tp:'3300',   label:'Entry ($)' },
+      index:  { entry:'500',    sl:'490',    tp:'530',    label:'Entry ($)' },
+    };
+    const d = defaults[t];
+    document.getElementById('entry').value = d.entry;
+    document.getElementById('sl').value = d.sl;
+    document.getElementById('tp').value = d.tp;
+    document.getElementById('entry-label').textContent = d.label;
+    document.getElementById('lot-field').style.display = t === 'forex' ? '' : 'none';
+    calc();
+  }
+
+  function calc() {
+    const bal      = parseFloat(document.getElementById('balance').value) || 0;
+    const riskPct  = parseFloat(document.getElementById('riskPct').value) || 0;
+    const entry    = parseFloat(document.getElementById('entry').value) || 0;
+    const sl       = parseFloat(document.getElementById('sl').value) || 0;
+    const tp       = parseFloat(document.getElementById('tp').value) || 0;
+    const lotType  = document.getElementById('lotType').value;
+    const warn     = document.getElementById('warnBox');
+
+    if (!bal || !entry || !sl || entry === sl) {
+      ['posSize','dollarRisk','slPips','potProfit','rrLabel'].forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('rrBar').style.width = '0%';
+      document.getElementById('rrNote').textContent = '';
+      warn.style.display = 'none';
+      return;
+    }
+
+    const dollarRisk = (bal * riskPct) / 100;
+    const slDiff = Math.abs(entry - sl);
+    const tpDiff = tp ? Math.abs(tp - entry) : 0;
+    const rr = tpDiff > 0 ? tpDiff / slDiff : 0;
+
+    let posSize = '', slLabel = '', potProfit = 0;
+
+    if (instType === 'forex') {
+      const lotSize = lotType === 'standard' ? 100000 : lotType === 'mini' ? 10000 : 1000;
+      const pipValue = lotSize * 0.0001;
+      const slPips = Math.round(slDiff / 0.0001);
+      const lots = (dollarRisk / (slPips * pipValue)).toFixed(2);
+      posSize = lots + ' lots';
+      slLabel = slPips + ' pips';
+      potProfit = tpDiff > 0 ? (tpDiff / 0.0001) * pipValue * parseFloat(lots) : 0;
+    } else if (instType === 'gold') {
+      const units = dollarRisk / slDiff;
+      posSize = units.toFixed(2) + ' oz';
+      slLabel = slDiff.toFixed(2) + ' pts';
+      potProfit = units * tpDiff;
+    } else if (instType === 'crypto') {
+      const units = dollarRisk / slDiff;
+      posSize = units.toFixed(4) + ' units';
+      slLabel = '$' + slDiff.toFixed(2);
+      potProfit = units * tpDiff;
+    } else {
+      const shares = Math.floor(dollarRisk / slDiff);
+      posSize = shares + ' shares';
+      slLabel = '$' + slDiff.toFixed(2);
+      potProfit = shares * tpDiff;
+    }
+
+    document.getElementById('posSize').textContent = posSize;
+    document.getElementById('dollarRisk').textContent = '$' + dollarRisk.toFixed(2);
+    document.getElementById('slPips').textContent = slLabel;
+    document.getElementById('potProfit').textContent = tp ? '$' + potProfit.toFixed(2) : '—';
+
+    if (rr > 0) {
+      document.getElementById('rrLabel').textContent = '1 : ' + rr.toFixed(2);
+      const fill = document.getElementById('rrBar');
+      fill.style.width = Math.min((rr / 5) * 100, 100) + '%';
+      fill.style.background = rr >= 2 ? '#c8f135' : rr >= 1 ? '#f7b731' : '#ff5e5e';
+      document.getElementById('rrNote').textContent =
+        rr >= 3 ? 'Excellent R:R ↗' :
+        rr >= 2 ? 'Good R:R' :
+        rr >= 1 ? 'Acceptable — tighten SL or extend TP' :
+        'Poor R:R — not advisable';
+    } else {
+      document.getElementById('rrLabel').textContent = '—';
+      document.getElementById('rrBar').style.width = '0%';
+      document.getElementById('rrNote').textContent = '';
+    }
+
+    const isSell = sl > entry;
+    const tpWrong = tp && ((isSell && tp > entry) || (!isSell && tp < entry));
+    if (tpWrong) {
+      warn.textContent = '⚠ TP is on the wrong side of entry for this direction.';
+      warn.style.display = 'block';
+    } else if (riskPct > 3) {
+      warn.textContent = '⚠ Risk above 3% per trade — high exposure to account.';
+      warn.style.display = 'block';
+    } else {
+      warn.style.display = 'none';
+    }
+  }
+
+  document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calc));
+  calc();
+</script>
+</body>
+</html>
